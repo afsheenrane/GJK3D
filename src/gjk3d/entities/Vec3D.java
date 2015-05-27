@@ -1,4 +1,4 @@
-package gjk3d;
+package gjk3d.entities;
 
 public class Vec3D {
 
@@ -95,8 +95,8 @@ public class Vec3D {
     public Vec3D cross(Vec3D v){
     	return Vec3D.cross(this, v);
     }
-
-	/**
+    
+    /**
 	 * @return the x
 	 */
 	public double getX() {
