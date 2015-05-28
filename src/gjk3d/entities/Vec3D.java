@@ -95,6 +95,25 @@ public class Vec3D {
     }
 
     /**
+     * Negate the current vector (mutate it).
+     */
+    public void negate() {
+        this.x = -x;
+        this.y = -y;
+        this.z = -z;
+    }
+
+    /**
+     * Return a negated copy of the vector v.
+     * 
+     * @param v the vector to get negated.
+     * @return a negated copy of the vector.
+     */
+    public static Vec3D getNegated(Vec3D v) {
+        return new Vec3D(-v.x, -v.y, -v.z);
+    }
+
+    /**
      * Get the cross product of this vector and v.
      * 
      * @param v the vector to cross product with.
