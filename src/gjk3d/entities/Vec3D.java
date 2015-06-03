@@ -27,6 +27,27 @@ public class Vec3D {
     }
 
     /**
+     * Adds vector v to this vector.
+     * 
+     * @param v the vector to add.
+     * @return a vector which is a sum of this vector and v.
+     */
+    public Vec3D add(Vec3D v) {
+        return Vec3D.add(this, v);
+    }
+
+    /**
+     * Adds vectors v1 and v2.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @return a vector which is the sum of v1 and v2.
+     */
+    public static Vec3D add(Vec3D v1, Vec3D v2) {
+        return new Vec3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+    }
+
+    /**
      * Get the length of the vector.
      * 
      * @return the scalar length of this vector.
@@ -101,6 +122,27 @@ public class Vec3D {
         this.x = -x;
         this.y = -y;
         this.z = -z;
+    }
+
+    /**
+     * Scale this vector by the numeric valid scale.
+     * 
+     * @param scale the value to scale this vector by.
+     * @return a scaled copy of this vector.
+     */
+    public Vec3D getScaled(double scale) {
+        return new Vec3D(this.x *= scale, this.y *= scale, this.z *= scale);
+    }
+
+    /**
+     * Scale this vector by the value scale.
+     * 
+     * @param scale the scale to change this vector by.
+     */
+    public void scaleBy(double scale) {
+        this.x *= scale;
+        this.y *= scale;
+        this.z *= scale;
     }
 
     /**
