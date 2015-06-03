@@ -48,6 +48,27 @@ public class Vec3D {
     }
 
     /**
+     * Subtracts vector v from this vector.
+     * 
+     * @param v the vector to add.
+     * @return a vector which is the difference of this vector and v.
+     */
+    public Vec3D sub(Vec3D v) {
+        return Vec3D.sub(this, v);
+    }
+
+    /**
+     * Return the difference of v1 and v2.
+     * 
+     * @param v1 the first vector.
+     * @param v2 the second vector.
+     * @return the vector difference of v1 and v2. (v1 - v2).
+     */
+    public static Vec3D sub(Vec3D v1, Vec3D v2) {
+        return new Vec3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+    }
+
+    /**
      * Get the length of the vector.
      * 
      * @return the scalar length of this vector.
