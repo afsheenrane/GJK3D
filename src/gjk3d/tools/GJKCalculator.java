@@ -35,7 +35,9 @@ public class GJKCalculator {
                 return false;
             }
 
-            else if (computeSimplex(simplex, dir)) {
+            simplex.add(newPt);
+
+            if (computeSimplex(simplex, dir)) {
                 return true;
             }
 
@@ -82,7 +84,22 @@ public class GJKCalculator {
     }
 
     private boolean computeLineSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
-        // TODO
+
+        Vec3D AB, AO;
+
+        AB = Vec3D.sub(simplex.get(0), simplex.get(1));
+        AO = simplex.get(1).getNegated();
+
+        // If AB . AO > 0, the body of the line is closest.
+        if (AB.dot(AO) > 0) {
+            dir = AB.cross(AO).cross(AB);
+        }
+        // Otherwise point A is closest.
+        else {
+            simplex.remove(1);
+            dir = AO;
+        }
+
         return false;
     }
 
