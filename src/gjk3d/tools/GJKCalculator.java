@@ -56,8 +56,44 @@ public class GJKCalculator {
         return Vec3D.sub(s1.support(dir), s2.support(Vec3D.getNegated(dir)));
     }
 
+    /**
+     * Modifies the simplex according to it's current characteristics and change
+     * the search direction if needed.
+     * 
+     * @param simplex the simplex computed so far.
+     * @param dir the search direction.
+     * @return true if the origin is inside the simplex, false otherwise.
+     */
     private boolean computeSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
-        // TODO Auto-generated method stub
+
+        switch (simplex.size()) {
+            case 2:
+                return computeLineSimplex(simplex, dir);
+            case 3:
+                return computeTriangleSimplex(simplex, dir);
+            case 4:
+                return computeTetraSimplex(simplex, dir);
+            default:
+                System.err.println("Simplex size error.");
+                System.exit(0);
+        }
+
         return false;
     }
+
+    private boolean computeLineSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
+        // TODO
+        return false;
+    }
+
+    private boolean computeTriangleSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
+        // TODO
+        return false;
+    }
+
+    private boolean computeTetraSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
+        // TODO
+        return false;
+    }
+
 }
