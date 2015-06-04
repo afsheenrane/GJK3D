@@ -83,6 +83,18 @@ public class GJKCalculator {
         return false;
     }
 
+    /**
+     * Compute the new simplex if it is currently a line. <br>
+     * The first point cannot be the closest feature to the origin. This is
+     * because it was already deduced that the newly added point is in the
+     * direction of the origin. Therefore, we only need to check if the new
+     * point is closest to the origin, or whether the line body is closest.
+     * 
+     * @param simplex the simplex computed thus far.
+     * @param dir the current search direction.
+     * @return false because it is not possible to enclose the origin with only
+     *         two points in R3.
+     */
     private boolean computeLineSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
 
         Vec3D AB, AO;
