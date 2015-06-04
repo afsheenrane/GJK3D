@@ -6,6 +6,10 @@ public class Vec3D {
 
     public static final Vec3D ORIGIN = new Vec3D();
 
+    public static final Vec3D XAXIS = new Vec3D(1, 0, 0);
+    public static final Vec3D YAXIS = new Vec3D(0, 1, 0);
+    public static final Vec3D ZAXIS = new Vec3D(0, 0, 1);
+
     /**
      * Initialize a vector to [0, 0, 0]
      */
@@ -143,6 +147,15 @@ public class Vec3D {
         this.x = -x;
         this.y = -y;
         this.z = -z;
+    }
+
+    /**
+     * Return a negated copy of this vector.
+     * 
+     * @return a negated copy of this vector.
+     */
+    public Vec3D getNegated() {
+        return Vec3D.getNegated(this);
     }
 
     /**
