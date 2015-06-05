@@ -76,7 +76,7 @@ public class GJKCalculator {
             case 4:
                 return computeTetraSimplex(simplex, dir);
             default:
-                System.err.println("Simplex size error.");
+                System.err.println("Simplex size error: " + simplex.size());
                 System.exit(0);
         }
 
@@ -115,8 +115,57 @@ public class GJKCalculator {
         return false;
     }
 
+    /**
+     * 
+     * @param simplex
+     * @param dir
+     * @return
+     */
     private boolean computeTriangleSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
-        // TODO
+
+        //@formatter:off 
+        
+        /* 
+         * Triangle:
+         * ....A....
+         * .../.\...
+         * ../...\..
+         * .B_____C.
+         */ 
+        
+        //@formatter:on
+
+        /*
+         * A is the newest point added. So we dont have to check edge plane BC
+         * because the origin is not there. We also don't have to check B or C.
+         */
+
+        Vec3D AB, AC, AO;
+        Vec3D ABplaneNorm, ACplaneNorm, ABCnorm;
+
+        AB = Vec3D.sub(simplex.get(1), simplex.get(2)); // B - A = AB
+        AC = Vec3D.sub(simplex.get(0), simplex.get(2)); // C - A = AC
+        AO = simplex.get(2).getNegated();
+
+        ABCnorm = AB.cross(AC);
+
+        ABplaneNorm = AB.cross(ABCnorm);
+        ACplaneNorm = ABCnorm.cross(AC);
+
+        if (ABplaneNorm.dot(AO) > 0) { // Somewhere past the AB plane
+            if (AB.dot(AO) > 0) { // Past the A voronoi region, inside AB's
+                                  // voronoi region
+                simplex.remove(0);
+                dir = AB.cross(AO).cross(AB);
+                return false;
+            }
+            else { // Inside A's voro region
+                simplex.remove(0);
+                simplex.remove(1);
+                dir = AO;
+            }
+        }
+
         return false;
     }
 
