@@ -204,7 +204,7 @@ public class GJKCalculator {
             }
             else { // Origin is in the triangle's plane..?
                 return true;
-                // TODO
+                // TODO because i dont actually know if anything bad happens now
             }
 
         }
@@ -212,8 +212,38 @@ public class GJKCalculator {
     }
 
     private boolean computeTetraSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
-        // TODO
+
+        //@formatter:off 
+        
+        /* 
+         * Tetrahedron: (I tried).
+         * ....D....
+         * .../|\...
+         * ../ A \..
+         * ./ / \ \.
+         * B_*___*_C
+         * 
+         * A=3,B=2,C=1,D=0
+         */ 
+        
+        //@formatter:on
+
+        Vec3D ABDnorm, ACDnorm, ABCnorm, BCDnorm;
+        Vec3D AB, BD, BC, AC, CD;
+
+        AB = Vec3D.sub(simplex.get(2), simplex.get(3));
+        BD = Vec3D.sub(simplex.get(0), simplex.get(2));
+        BC = Vec3D.sub(simplex.get(1), simplex.get(2));
+        AC = Vec3D.sub(simplex.get(1), simplex.get(3));
+        CD = Vec3D.sub(simplex.get(0), simplex.get(1));
+
+        // Triangle norms pointing outwards
+
+        BCDnorm = dir; // Because A was found in this direction.
+        ABDnorm = BD.cross(AB);
+        ABCnorm = AB.cross(BC);
+        ACDnorm = AC.cross(CD);
+
         return false;
     }
-
 }
