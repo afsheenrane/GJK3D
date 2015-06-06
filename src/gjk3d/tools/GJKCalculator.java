@@ -84,7 +84,8 @@ public class GJKCalculator {
     }
 
     /**
-     * Compute the new simplex if it is currently a line. <br>
+     * Compute the new search direction and new simplex if it is currently a
+     * line. <br>
      * The first point cannot be the closest feature to the origin. This is
      * because it was already deduced that the newly added point is in the
      * direction of the origin. Therefore, we only need to check if the new
@@ -116,9 +117,13 @@ public class GJKCalculator {
     }
 
     /**
+     * Compute the new search direction and new simplex if it is currently a
+     * triangle. <br>
+     * Like the line case, B, C, or BC cannot the closest features to the
+     * origin. So they are automatically discarded and checks are not done.
      * 
-     * @param simplex
-     * @param dir
+     * @param simplex the simplex computed thus far.
+     * @param dir the current search direction.
      * @return
      */
     private boolean computeTriangleSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
@@ -153,9 +158,9 @@ public class GJKCalculator {
         ACplaneNorm = ABCnorm.cross(AC);
 
         if (ABplaneNorm.dot(AO) > 0) { // Somewhere past the AB plane
-            if (AB.dot(AO) > 0) { // Past the A voronoi region, inside AB's
-                                  // voronoi region
-                simplex.remove(0);
+            if (AB.dot(AO) > 0) { // Past the A vor region, inside AB's vor
+                                  // region
+                simplex.remove(0); // So remove C
                 dir = AB.cross(AO).cross(AB);
                 return false;
             }
@@ -163,10 +168,47 @@ public class GJKCalculator {
                 simplex.remove(0);
                 simplex.remove(1);
                 dir = AO;
+                return false;
             }
         }
 
-        return false;
+        else if (ACplaneNorm.dot(AO) > 0) { // Somewhere past the AC plane
+            if (AC.dot(AO) > 0) { // Past the A voronoi region, inside AC's vor
+                                  // region
+                simplex.remove(1); // So remove B
+                dir = AC.cross(AO).cross(AC);
+                return false;
+            }
+            else { // Inside A's voronoi region
+                simplex.remove(0); // Remove C.
+                simplex.remove(1); // Remove B.
+                dir = AO;
+                return false;
+            }
+        }
+        else { // On top of or below the triangle.
+            double ABCnormDotAO = ABCnorm.dot(AO);
+            if (ABCnormDotAO > 0) { // Above plane of triangle.
+                // Simplex stays the same.
+                dir = ABCnorm;
+                return false;
+            }
+            else if (ABCnormDotAO < 0) { // Below plane of triangle.
+                dir = ABCnorm.getNegated();
+
+                // Swap B, C to correctly reorient triangle.
+                Vec3D tempC = simplex.get(0); // Hold C in temp.
+                simplex.set(0, simplex.get(1)); // Put B into C's slot.
+                simplex.set(1, tempC); // Put C into B's slot.
+                return false;
+            }
+            else { // Origin is in the triangle's plane..?
+                return true;
+                // TODO
+            }
+
+        }
+
     }
 
     private boolean computeTetraSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
