@@ -228,22 +228,104 @@ public class GJKCalculator {
         
         //@formatter:on
 
-        Vec3D ABDnorm, ACDnorm, ABCnorm, BCDnorm;
-        Vec3D AB, BD, BC, AC, CD;
+        // The normal of the current triangle surface being tested.
+        Vec3D surfaceNorm;
+        Vec3D AB, AC, AO, AD;
+
+        AO = simplex.get(3).getNegated();
 
         AB = Vec3D.sub(simplex.get(2), simplex.get(3));
-        BD = Vec3D.sub(simplex.get(0), simplex.get(2));
-        BC = Vec3D.sub(simplex.get(1), simplex.get(2));
         AC = Vec3D.sub(simplex.get(1), simplex.get(3));
-        CD = Vec3D.sub(simplex.get(0), simplex.get(1));
 
-        // Triangle norms pointing outwards
+        // First test the ABC surface.
+        surfaceNorm = AB.cross(AC);
 
-        BCDnorm = dir; // Because A was found in this direction.
-        ABDnorm = BD.cross(AB);
-        ABCnorm = AB.cross(BC);
-        ACDnorm = AC.cross(CD);
+        // If the origin is outside the tetrahedron, update the simplex, search
+        // direction and return.
+        if (surfaceNorm.dot(AO) > 0) {
+            refineSimplex(simplex, dir, surfaceNorm, simplex.get(2),
+                    simplex.get(1), AB, AC, AO);
+            return false;
+        }
 
-        return false;
+        AD = Vec3D.sub(simplex.get(0), simplex.get(3));
+        // Next, test the ADB surface.
+        surfaceNorm = AD.cross(AB);
+
+        if (surfaceNorm.dot(AO) > 0) {
+            refineSimplex(simplex, dir, surfaceNorm, simplex.get(0),
+                    simplex.get(2), AD, AB, AO);
+            return false;
+        }
+
+        // Finally, test the ACD surface.
+        surfaceNorm = AC.cross(AD);
+
+        if (surfaceNorm.dot(AO) > 0) {
+            refineSimplex(simplex, dir, surfaceNorm, simplex.get(1),
+                    simplex.get(0), AC, AD, AO);
+            return false;
+        }
+
+        // No need to test BCD surface because with the addition of A, we
+        // already know that the origin is not in front of it.
+        // Therefore, the origin is contained within the tetrahedron simplex.
+        return true;
+
+    }
+
+    /**
+     * Remove all unnecessary vertices from the simplex (those which are not
+     * closest to the origin) and refine the search direction. The surface is
+     * defined by the CCW triangle APQ. <br>
+     * 'A' does not need to be passed in because it is known to be the last item
+     * added to the simplex.
+     * 
+     * @param simplex the current tetrahedron simplex.
+     * @param dir the current search direction.
+     * @param surfaceNorm the normal of the surface being checked.
+     * @param P the 2nd vertex of the triangle.
+     * @param Q the 3nd vertex of the triangle.
+     * @param AP the AP vector.
+     * @param AQ the AQ vector.
+     * @param AO the reference vector pointing at the origin.
+     */
+    private void refineSimplex(ArrayList<Vec3D> simplex, Vec3D dir,
+            Vec3D surfaceNorm, Vec3D P, Vec3D Q, Vec3D AP, Vec3D AQ, Vec3D AO) {
+
+        Vec3D APnorm = AP.cross(surfaceNorm);
+        Vec3D A = simplex.get(3);
+
+        if (APnorm.dot(AO) > 0) {
+            dir = AP.cross(AO).cross(AP);
+
+            // The new simplex should be a line again.
+            simplex.clear();
+            simplex.add(P);
+            simplex.add(A); // Set the "last added" pt to be A.
+            return;
+        }
+
+        Vec3D AQnorm = surfaceNorm.cross(AQ);
+
+        if (AQnorm.dot(AO) > 0) {
+            dir = AQ.cross(AO).cross(AQ);
+
+            // The new simplex should be a line again.
+            simplex.clear();
+            simplex.add(Q);
+            simplex.add(A); // Set the "last added" pt to be A.
+            return;
+        }
+
+        // Else the triangle surface is closest to the origin.
+        dir = surfaceNorm;
+
+        // The new simplex should be a line again.
+        simplex.clear();
+        simplex.add(Q);
+        simplex.add(P);
+        simplex.add(A); // Set the "last added" pt to be A.
+
     }
 }
