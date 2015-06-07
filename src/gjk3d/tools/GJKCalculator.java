@@ -211,6 +211,15 @@ public class GJKCalculator {
 
     }
 
+    /**
+     * Compute the new search direction and new simplex if it is currently a
+     * tetraheadron. <br>
+     *
+     * @param simplex the current tetrahedron simplex.
+     * @param dir the current search direction.
+     * @return true if the origin is contained within the simplex. False
+     *         otherwise.
+     */
     private boolean computeTetraSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
 
         //@formatter:off 
@@ -279,7 +288,9 @@ public class GJKCalculator {
      * closest to the origin) and refine the search direction. The surface is
      * defined by the CCW triangle APQ. <br>
      * 'A' does not need to be passed in because it is known to be the last item
-     * added to the simplex.
+     * added to the simplex. <br>
+     * <i> The large number of parameters is mainly to skip unnecessary
+     * computation of values which have already been found earlier. </i>
      * 
      * @param simplex the current tetrahedron simplex.
      * @param dir the current search direction.
