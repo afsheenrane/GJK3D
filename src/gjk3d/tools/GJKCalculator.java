@@ -16,28 +16,28 @@ public class GJKCalculator {
      */
     public boolean isColliding(Shape s1, Shape s2) {
 
-        Vec3D dir = Vec3D.XAXIS;
+        GJKStruct gjkInfo = new GJKStruct();
+
+        gjkInfo.dir = Vec3D.XAXIS;
 
         Vec3D newPt;
 
-        ArrayList<Vec3D> simplex = new ArrayList<>(4);
-
-        simplex.add(getSupport(s1, s2, dir));
-        dir.negate();
+        gjkInfo.simplex.add(getSupport(s1, s2, gjkInfo.dir));
+        gjkInfo.dir.negate();
 
         while (true) {
 
-            newPt = getSupport(s1, s2, dir);
+            newPt = getSupport(s1, s2, gjkInfo.dir);
 
             // If the new point in the new direction cannot even make it past
             // the origin, then there is no way to encapsulate the origin.
-            if (newPt.dot(dir) < 0) {
+            if (newPt.dot(gjkInfo.dir) < 0) {
                 return false;
             }
 
-            simplex.add(newPt);
+            gjkInfo.simplex.add(newPt);
 
-            if (computeSimplex(simplex, dir)) {
+            if (computeSimplex(gjkInfo)) {
                 return true;
             }
 
@@ -66,17 +66,18 @@ public class GJKCalculator {
      * @param dir the search direction.
      * @return true if the origin is inside the simplex, false otherwise.
      */
-    private boolean computeSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
+    private boolean computeSimplex(GJKStruct gjkInfo) {
 
-        switch (simplex.size()) {
+        switch (gjkInfo.simplex.size()) {
             case 2:
-                return computeLineSimplex(simplex, dir);
+                return computeLineSimplex(gjkInfo);
             case 3:
-                return computeTriangleSimplex(simplex, dir);
+                return computeTriangleSimplex(gjkInfo);
             case 4:
-                return computeTetraSimplex(simplex, dir);
+                return computeTetraSimplex(gjkInfo);
             default:
-                System.err.println("Simplex size error: " + simplex.size());
+                System.err.println("Simplex size error: "
+                        + gjkInfo.simplex.size());
                 System.exit(0);
         }
 
@@ -96,21 +97,21 @@ public class GJKCalculator {
      * @return false because it is not possible to enclose the origin with only
      *         two points in R3.
      */
-    private boolean computeLineSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
+    private boolean computeLineSimplex(GJKStruct gjkInfo) {
 
         Vec3D AB, AO;
 
-        AB = Vec3D.sub(simplex.get(0), simplex.get(1));
-        AO = simplex.get(1).getNegated();
+        AB = Vec3D.sub(gjkInfo.simplex.get(0), gjkInfo.simplex.get(1));
+        AO = gjkInfo.simplex.get(1).getNegated();
 
         // If AB . AO > 0, the body of the line is closest.
         if (AB.dot(AO) > 0) {
-            dir = AB.cross(AO).cross(AB);
+            gjkInfo.dir = AB.cross(AO).cross(AB);
         }
         // Otherwise point A is closest.
         else {
-            simplex.remove(1);
-            dir = AO;
+            gjkInfo.simplex.remove(1);
+            gjkInfo.dir = AO;
         }
 
         return false;
@@ -126,7 +127,7 @@ public class GJKCalculator {
      * @param dir the current search direction.
      * @return
      */
-    private boolean computeTriangleSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
+    private boolean computeTriangleSimplex(GJKStruct gjkInfo) {
 
         //@formatter:off 
         
@@ -148,9 +149,11 @@ public class GJKCalculator {
         Vec3D AB, AC, AO;
         Vec3D ABplaneNorm, ACplaneNorm, ABCnorm;
 
-        AB = Vec3D.sub(simplex.get(1), simplex.get(2)); // B - A = AB
-        AC = Vec3D.sub(simplex.get(0), simplex.get(2)); // C - A = AC
-        AO = simplex.get(2).getNegated();
+        AB = Vec3D.sub(gjkInfo.simplex.get(1), gjkInfo.simplex.get(2)); // B - A
+                                                                        // = AB
+        AC = Vec3D.sub(gjkInfo.simplex.get(0), gjkInfo.simplex.get(2)); // C - A
+                                                                        // = AC
+        AO = gjkInfo.simplex.get(2).getNegated();
 
         ABCnorm = AB.cross(AC);
 
@@ -160,14 +163,14 @@ public class GJKCalculator {
         if (ABplaneNorm.dot(AO) > 0) { // Somewhere past the AB plane
             if (AB.dot(AO) > 0) { // Past the A vor region, inside AB's vor
                                   // region
-                simplex.remove(0); // So remove C
-                dir = AB.cross(AO).cross(AB);
+                gjkInfo.simplex.remove(0); // So remove C
+                gjkInfo.dir = AB.cross(AO).cross(AB);
                 return false;
             }
             else { // Inside A's voro region
-                simplex.remove(0);
-                simplex.remove(1);
-                dir = AO;
+                gjkInfo.simplex.remove(0);
+                gjkInfo.simplex.remove(1);
+                gjkInfo.dir = AO;
                 return false;
             }
         }
@@ -175,14 +178,14 @@ public class GJKCalculator {
         else if (ACplaneNorm.dot(AO) > 0) { // Somewhere past the AC plane
             if (AC.dot(AO) > 0) { // Past the A voronoi region, inside AC's vor
                                   // region
-                simplex.remove(1); // So remove B
-                dir = AC.cross(AO).cross(AC);
+                gjkInfo.simplex.remove(1); // So remove B
+                gjkInfo.dir = AC.cross(AO).cross(AC);
                 return false;
             }
             else { // Inside A's voronoi region
-                simplex.remove(0); // Remove C.
-                simplex.remove(1); // Remove B.
-                dir = AO;
+                gjkInfo.simplex.remove(0); // Remove C.
+                gjkInfo.simplex.remove(1); // Remove B.
+                gjkInfo.dir = AO;
                 return false;
             }
         }
@@ -190,16 +193,17 @@ public class GJKCalculator {
             double ABCnormDotAO = ABCnorm.dot(AO);
             if (ABCnormDotAO > 0) { // Above plane of triangle.
                 // Simplex stays the same.
-                dir = ABCnorm;
+                gjkInfo.dir = ABCnorm;
                 return false;
             }
             else if (ABCnormDotAO < 0) { // Below plane of triangle.
-                dir = ABCnorm.getNegated();
+                gjkInfo.dir = ABCnorm.getNegated();
 
                 // Swap B, C to correctly reorient triangle.
-                Vec3D tempC = simplex.get(0); // Hold C in temp.
-                simplex.set(0, simplex.get(1)); // Put B into C's slot.
-                simplex.set(1, tempC); // Put C into B's slot.
+                Vec3D tempC = gjkInfo.simplex.get(0); // Hold C in temp.
+                gjkInfo.simplex.set(0, gjkInfo.simplex.get(1)); // Put B into
+                                                                // C's slot.
+                gjkInfo.simplex.set(1, tempC); // Put C into B's slot.
                 return false;
             }
             else { // Origin is in the triangle's plane..?
@@ -220,7 +224,7 @@ public class GJKCalculator {
      * @return true if the origin is contained within the simplex. False
      *         otherwise.
      */
-    private boolean computeTetraSimplex(ArrayList<Vec3D> simplex, Vec3D dir) {
+    private boolean computeTetraSimplex(GJKStruct gjkInfo) {
 
         //@formatter:off 
         
@@ -241,10 +245,10 @@ public class GJKCalculator {
         Vec3D surfaceNorm;
         Vec3D AB, AC, AO, AD;
 
-        AO = simplex.get(3).getNegated();
+        AO = gjkInfo.simplex.get(3).getNegated();
 
-        AB = Vec3D.sub(simplex.get(2), simplex.get(3));
-        AC = Vec3D.sub(simplex.get(1), simplex.get(3));
+        AB = Vec3D.sub(gjkInfo.simplex.get(2), gjkInfo.simplex.get(3));
+        AC = Vec3D.sub(gjkInfo.simplex.get(1), gjkInfo.simplex.get(3));
 
         // First test the ABC surface.
         surfaceNorm = AB.cross(AC);
@@ -252,18 +256,18 @@ public class GJKCalculator {
         // If the origin is outside the tetrahedron, update the simplex, search
         // direction and return.
         if (surfaceNorm.dot(AO) > 0) {
-            refineSimplex(simplex, dir, surfaceNorm, simplex.get(2),
-                    simplex.get(1), AB, AC, AO);
+            refineSimplex(gjkInfo, surfaceNorm, gjkInfo.simplex.get(2),
+                    gjkInfo.simplex.get(1), AB, AC, AO);
             return false;
         }
 
-        AD = Vec3D.sub(simplex.get(0), simplex.get(3));
+        AD = Vec3D.sub(gjkInfo.simplex.get(0), gjkInfo.simplex.get(3));
         // Next, test the ADB surface.
         surfaceNorm = AD.cross(AB);
 
         if (surfaceNorm.dot(AO) > 0) {
-            refineSimplex(simplex, dir, surfaceNorm, simplex.get(0),
-                    simplex.get(2), AD, AB, AO);
+            refineSimplex(gjkInfo, surfaceNorm, gjkInfo.simplex.get(0),
+                    gjkInfo.simplex.get(2), AD, AB, AO);
             return false;
         }
 
@@ -271,8 +275,8 @@ public class GJKCalculator {
         surfaceNorm = AC.cross(AD);
 
         if (surfaceNorm.dot(AO) > 0) {
-            refineSimplex(simplex, dir, surfaceNorm, simplex.get(1),
-                    simplex.get(0), AC, AD, AO);
+            refineSimplex(gjkInfo, surfaceNorm, gjkInfo.simplex.get(1),
+                    gjkInfo.simplex.get(0), AC, AD, AO);
             return false;
         }
 
@@ -301,42 +305,72 @@ public class GJKCalculator {
      * @param AQ the AQ vector.
      * @param AO the reference vector pointing at the origin.
      */
-    private void refineSimplex(ArrayList<Vec3D> simplex, Vec3D dir,
-            Vec3D surfaceNorm, Vec3D P, Vec3D Q, Vec3D AP, Vec3D AQ, Vec3D AO) {
+    private void refineSimplex(GJKStruct gjkInfo, Vec3D surfaceNorm, Vec3D P,
+            Vec3D Q, Vec3D AP, Vec3D AQ, Vec3D AO) {
 
         Vec3D APnorm = AP.cross(surfaceNorm);
-        Vec3D A = simplex.get(3);
+        Vec3D A = gjkInfo.simplex.get(3);
 
         if (APnorm.dot(AO) > 0) {
-            dir = AP.cross(AO).cross(AP);
+            gjkInfo.dir = AP.cross(AO).cross(AP);
 
             // The new simplex should be a line again.
-            simplex.clear();
-            simplex.add(P);
-            simplex.add(A); // Set the "last added" pt to be A.
+            gjkInfo.simplex.clear();
+            gjkInfo.simplex.add(P);
+            gjkInfo.simplex.add(A); // Set the "last added" pt to be A.
             return;
         }
 
         Vec3D AQnorm = surfaceNorm.cross(AQ);
 
         if (AQnorm.dot(AO) > 0) {
-            dir = AQ.cross(AO).cross(AQ);
+            gjkInfo.dir = AQ.cross(AO).cross(AQ);
 
             // The new simplex should be a line again.
-            simplex.clear();
-            simplex.add(Q);
-            simplex.add(A); // Set the "last added" pt to be A.
+            gjkInfo.simplex.clear();
+            gjkInfo.simplex.add(Q);
+            gjkInfo.simplex.add(A); // Set the "last added" pt to be A.
             return;
         }
 
         // Else the triangle surface is closest to the origin.
-        dir = surfaceNorm;
+        gjkInfo.dir = surfaceNorm;
 
         // The new simplex should be a line again.
-        simplex.clear();
-        simplex.add(Q);
-        simplex.add(P);
-        simplex.add(A); // Set the "last added" pt to be A.
+        gjkInfo.simplex.clear();
+        gjkInfo.simplex.add(Q);
+        gjkInfo.simplex.add(P);
+        gjkInfo.simplex.add(A); // Set the "last added" pt to be A.
 
     }
+}
+
+/**
+ * This class holds all the vital information used by th GJK algorithm while it
+ * computes whether a collision has taken place.
+ * 
+ * @author Afsheen
+ *
+ */
+class GJKStruct {
+
+    /**
+     * The simplex for the gjk algorithm.
+     */
+    ArrayList<Vec3D> simplex;
+
+    /**
+     * The current search direction.
+     */
+    Vec3D dir;
+
+    /**
+     * Initialize a new GJKStruct with an empty simplex of size 3 and a search
+     * direction = [0,0].
+     */
+    GJKStruct() {
+        this.simplex = new ArrayList<Vec3D>(4);
+        this.dir = new Vec3D();
+    }
+
 }
